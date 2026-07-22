@@ -164,6 +164,27 @@
   }
   .pl-item:hover{background:rgba(139,224,78,.1)}
   .pl-item.active{background:rgba(47,214,115,.25);opacity:1;color:var(--glow);font-weight:700}
+  .bonus-btn{
+    margin-top: 2px; padding: 9px 16px;border-radius:10px;border: 0;cursor: pointer;
+    background: linear-gradient(160deg, var(--emerald), var(--leaf));
+    color: #fff;font-weight: 700;font-family: "Fredoka",sans-serif;font-size:.8rem;
+    box-shadow: 0 6px 16px rgba(0,0,0,.4);
+    animation:bonusPulse 1.8s ease-in-out;
+  }
+  @keyframes bonusPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+
+  /* -- Tema alterno para las canciones bonus --*/
+  body.bonus-theme{
+      --pine:#3D0A14;
+      --deep:#6E1226;
+      --mid:#A81F3D;
+      --leaf:#D9294F;
+      --emerald:#FF4B6E;
+      --lime:#FF7A93;
+      --glow:#FFB3C6;
+      --mint:#FFEAF0;
+  }
+  
 
   /* ── Carta ── */
   .carta-wrap{
@@ -364,6 +385,8 @@
               <button id="playBtn" class="play" title="Reproducir">&#9654;</button>
               <button id="nextBtn" title="Siguiente">&#9654;&#9654;</button>
             </div>
+
+            <button id="bonusBtn" class="bonus-btn" style="display: none"> Canciones sorpresa desbloqueadas ♡</button>
           </div>
 
           <div class="playlist" id="playlist"></div>
@@ -589,6 +612,28 @@
     }
   ];
 
+  var REQUIRED_ORDER = SONGS.length;
+
+  /* Canciones sorpresa; */
+  var BONUS_SONGS = [
+    {
+      title:  "The Night We Met",
+      artist: "Lord Huron",
+      src:    "audio/The-Night-We-Met.mp3",
+      cover:  "portadas/The-Night-We-Met.png",
+      lrc:    "letras/The-Night-We-Met.lrc",
+      bonus: true
+    },
+    {
+      title:  "Can't Help Falling in Love",
+      artist: "Elvis Presl",
+      src:    "audio/Cant-Help-Falling-in-Love.mp3",
+      cover:  "portadas/Cant-Help-Falling-in-Love.png",
+      lrc:    "letras/Cant-Help-Falling-in-Love.lrc",
+      bonus: true
+    }
+  ];
+
   /* ── Referencias DOM ── */
   var audio       = document.getElementById('audio');
   var seek        = document.getElementById('seek');
@@ -600,6 +645,18 @@
   var trackTitle  = document.getElementById('trackTitle');
   var lyricsEl    = document.getElementById('lyrics');
   var playlistEl  = document.getElementById('playlist');
+  var bonusBtn    = document.getElementById('bonusBtn');
+  
+  /* -- Progreso: hay que escuchar las canciones completas y en orden -- */
+  var progress      = parseInt(localStorage.getItem('reproductor_progress') || '0', 10);
+  var bonusUnlocked = localStorage.getItem('reproductor_bonus_unlocked') === '1';
+  if (bonusUnlocked) bonusBtn.style.display = '';
+
+  bonusBtn.addEventListener('click', function(){
+    if(SONGS.indexOf(BONUS_SONGS) === -1) SONGS.push(BONUS_SONGS);
+    load(SONGS.length - 1);
+    play();
+  });
 
   var current   = 0;
   var isPlaying = false;
@@ -711,6 +768,8 @@
     current = i;
     var song = SONGS[i];
 
+    document.body.classList.toggle('bonus-theme', !!song.bonus);
+
     audio.src = song.src;
     trackArtist.textContent = song.artist;
     trackTitle.textContent  = song.title;
@@ -772,7 +831,16 @@
     durTimeEl.textContent = fmt(audio.duration);
   });
   audio.addEventListener('ended', function(){
-    load((current + 1) % SONGS.length);
+    if(!bonusUnlocked && current === progress && current < REQUIRED_ORDER){
+      progress++;
+      localStorage.setItem('reproductor_progress', progress);
+      if(progress >= REQUIRED_ORDER){
+        bonusUnlocked = true;
+        localStorage.setItem('reproductor_bonus_unlocked', '1');
+        bonusBtn.style.display = '';
+      }
+    }
+    load((curren + 1) % SONGS.length);
     play();
   });
 
