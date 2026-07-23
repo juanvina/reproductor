@@ -348,7 +348,7 @@
 
   <div class="app" id="appRoot" style="display:none">
     <div class="tabs">
-      <button class="tab-btn active" id="tabBtnPlayer">Reproductor (Escucha primero)</button>
+      <button class="tab-btn active" id="tabBtnPlayer">Reproductor</button>
       <button class="tab-btn" id="tabBtnCarta">Carta</button>
     </div>
 
@@ -507,6 +507,7 @@
   function tryUnlock(){
     if(lockInput.value === LOCK_PASS){
       unlock();
+      play();
     } else {
       lockError.classList.add('show');
       lockInput.value = '';
@@ -620,7 +621,7 @@
       title:  "The Night We Met",
       artist: "Lord Huron",
       src:    "audio/The-Night-We-Met.mp3",
-      cover:  "portadas/The-Night-We-Met.png",
+      cover:  null,
       lrc:    "letras/The-Night-We-Met.lrc",
       bonus: true
     },
@@ -628,7 +629,7 @@
       title:  "Can't Help Falling in Love",
       artist: "Elvis Presl",
       src:    "audio/Cant-Help-Falling-in-Love.mp3",
-      cover:  "portadas/Cant-Help-Falling-in-Love.png",
+      cover:  null,
       lrc:    "letras/Cant-Help-Falling-in-Love.lrc",
       bonus: true
     }
@@ -653,8 +654,10 @@
   if (bonusUnlocked) bonusBtn.style.display = '';
 
   bonusBtn.addEventListener('click', function(){
-    if(SONGS.indexOf(BONUS_SONGS) === -1) SONGS.push(BONUS_SONGS);
-    load(SONGS.length - 1);
+    BONUS_SONGS.forEach(function(song){
+      if(SONGS.indexOf(song) === -1) SONGS.push(song);
+    });
+    load(SONGS.length - BONUS_SONGS.length);
     play();
   });
 
@@ -840,7 +843,13 @@
         bonusBtn.style.display = '';
       }
     }
-    load((current + 1) % SONGS.length);
+
+    if(current === SONGS.length - 1){
+      pause();
+      return;
+    }
+
+    load(current + 1);
     play();
   });
 
